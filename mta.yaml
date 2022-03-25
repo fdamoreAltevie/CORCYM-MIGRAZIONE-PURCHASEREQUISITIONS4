@@ -1,0 +1,94 @@
+_schema-version: "3.2"
+ID: purchaserequisitionapprovalS4HANA
+description: Purchase Requisition Approval
+version: 0.1.4
+modules:
+- name: purchaserequisitionapprovalS4HANA-dest-content
+  type: com.sap.application.content
+  requires:
+  - name: purchaserequisitionapprovalS4HANA-dest-srv
+    parameters:
+      content-target: true
+  - name: purchaserequisitionapprovalS4HANA-repo-host
+    parameters:
+      service-key:
+        name: purchaserequisitionapprovalS4HANA-repo-host-key
+  - name: purchaserequisitionapprovalS4HANA-uaa
+    parameters:
+      service-key:
+        name: purchaserequisitionapprovalS4HANA-uaa-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: purchaserequisitionapprovalS4HANA_repo_host
+          ServiceInstanceName: purchaserequisitionapprovalS4HANA-html5-srv
+          ServiceKeyName: purchaserequisitionapprovalS4HANA-repo-host-key
+          sap.cloud.service: purchaserequisitionapprovalS4HANA
+        - Authentication: OAuth2UserTokenExchange
+          Name: purchaserequisitionapprovalS4HANA_uaa
+          ServiceInstanceName: purchaserequisitionapprovalS4HANA-xsuaa-srv
+          ServiceKeyName: purchaserequisitionapprovalS4HANA-uaa-key
+          sap.cloud.service: purchaserequisitionapprovalS4HANA
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+- name: purchaserequisitionapprovalS4HANA-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: purchaserequisitionapprovalS4HANA-repo-host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - purchaserequisitionapprovalS4HANA.zip
+      name: purchaserequisitionapprovalS4HANA
+      target-path: resources/
+- name: purchaserequisitionapprovalS4HANA
+  type: html5
+  path: .
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: purchaserequisitionapprovalS4HANA-dest-srv
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+      version: 1.0.0
+    service: destination
+    service-name: purchaserequisitionapprovalS4HANA-dest-srv
+    service-plan: lite
+- name: purchaserequisitionapprovalS4HANA-uaa
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: purchaserequisitionapprovalS4HANA-xsuaa-srv
+    service-plan: application
+- name: purchaserequisitionapprovalS4HANA-repo-host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: purchaserequisitionapprovalS4HANA-html5-srv
+    service-plan: app-host
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
